@@ -1,4 +1,5 @@
 use crate::oauth::{authorize_user, curl_site, request_site, OAuthClient};
+use crate::rvp_ui::{RVPUI};
 use serde_json::{Result, Value};
 
 pub struct RVPClient {
@@ -13,12 +14,21 @@ struct RvpClientConfig {
 impl RVPClient {
     pub fn new() -> RVPClient {
         let config = RvpClientConfig { auth_time: 60 };
-        let o_client = RVPClient::authorize_client(config.auth_time);
+        let o_client = OAuthClient::new();
         RVPClient {
             o_client,
             client_config: config,
         }
     }
+
+    pub fn run(self, loglevel: String) {
+        let ui = RVPUI::new(loglevel);
+        // Main Logic of RVP
+        // Take command
+        ui.print_welcome_message();
+        ui.expect_command();
+    }
+
     pub fn authorize_client(auth_time: usize) -> OAuthClient {
         authorize_user(auth_time)
     }

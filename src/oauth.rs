@@ -46,6 +46,9 @@ struct AuthBox {
 }
 
 impl OAuthClient {
+    pub fn new() -> OAuthClient {
+        build_oauth_client()
+    }
     pub fn get_access_token(&self) -> String {
         if let token = self.oauth_token.as_ref().unwrap() {
             return token.access_token.clone();
