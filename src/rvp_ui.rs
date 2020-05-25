@@ -55,15 +55,10 @@ impl RVPUI {
         println!("Reddit View Portal");
     }
 
-    pub fn expect_command(&self) {
-        self.display_message("[Command]");
-        let command = RVPUI::expect_input();
-        let command = self.validate_command(command).unwrap();
-        self.display_message(&command[..]);
-    }
-
-    fn validate_command(&self, c: String) -> Result<String, String> {
-        Ok(c)
+    pub fn expect_command(&self) -> String{
+        self.display_message("[Command] Waiting for command");
+        self.display_message("Log in (login/l)\nVisist subreddit (subreddit/r)");
+        RVPUI::expect_input()
     }
 
     fn expect_input() -> String {
@@ -72,8 +67,8 @@ impl RVPUI {
         io::stdin()
             .read_line(&mut dialog_answer)
             .expect("Failed to read line");
-
-        dialog_answer
+        let trimmed = (&dialog_answer[..]).trim();
+        trimmed.to_string()
     }
 
     fn display_message(&self, m: &str){
