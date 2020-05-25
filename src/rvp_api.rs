@@ -1,9 +1,10 @@
 use crate::oauth::{authorize_user, curl_site, request_site, OAuthClient};
-use crate::rvp_ui::{RVPUI};
+use crate::rvp_ui::RVPUI;
 
 pub struct RVPClient {
     o_client: OAuthClient,
     client_config: RvpClientConfig,
+    is_exiting: bool,
 }
 
 struct RvpClientConfig {
@@ -17,6 +18,7 @@ impl RVPClient {
         RVPClient {
             o_client,
             client_config: config,
+            is_exiting: false,
         }
     }
 
@@ -25,23 +27,29 @@ impl RVPClient {
         // Main Logic of RVP
         // Take command
         ui.print_welcome_message();
-        let c = ui.expect_command();
-        let command = self.validate_command(c).unwrap();
-        self.execute_command(command);
+        while !self.is_exiting {
+            let c = ui.expect_command();
+            let command = self.validate_command(c).unwrap();
+            self.execute_command(command, &ui);
+        }
+        ui.display_message("Goodbye!");
+        // Cleanup here if necessary
     }
 
     fn validate_command(&self, c: String) -> Result<String, String> {
         match &c[..] {
             "l" | "login" => Ok(String::from("l")),
             "r" | "subreddit" => Ok(String::from("r")),
-            _ => Err(String::from("Unknown command"))
+            "x" | "exit" => Ok(String::from("x")),
+            _ => Err(String::from("Unknown command")),
         }
     }
 
-    fn execute_command(&mut self, c: String) {
+    fn execute_command(&mut self, c: String, ui: &RVPUI) {
         match &c[..] {
             "l" => self.authorize_client(),
-            _ => ()
+            "x" => self.exit_client(ui),
+            _ => (),
         }
     }
 
@@ -49,9 +57,14 @@ impl RVPClient {
         let o_client = authorize_user(self.client_config.auth_time);
         self.o_client = o_client;
     }
-    pub fn get_subreddit_posts(&mut self, subreddit: &str, post_amount: usize) {
 
-        use serde_json::{Result, Value};
+    fn exit_client(&mut self, ui: &RVPUI) {
+        ui.display_log_message("Exiting Client", "TRACE".to_string());
+        self.is_exiting = true;
+    }
+
+    pub fn get_subreddit_posts(&mut self, subreddit: &str, post_amount: usize) {
+        use serde_json::{Value};
         let string_response = curl_site(subreddit, post_amount);
         //println!("{}",string_response);
         let post: Value = serde_json::from_str(&string_response).unwrap();

@@ -4,7 +4,6 @@ mod oauth;
 mod rvp_api;
 mod rvp_ui;
 
-
 use rvp_api::RVPClient;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

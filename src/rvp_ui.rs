@@ -28,7 +28,7 @@ impl RedditHistory {
     "INFO",
     "WARN",
     "ERROR",
-    "FATAl",
+    "FATAL",
     "OFF",
 */
 pub struct RVPUI {
@@ -37,27 +37,21 @@ pub struct RVPUI {
 }
 
 impl RVPUI {
-
     pub fn new(loglevel: String) -> RVPUI {
         let hist = RedditHistory::new();
         RVPUI {
             history: hist,
-            loglevel: loglevel
+            loglevel: loglevel,
         }
     }
-
-    pub fn set_loglevel(&mut self, loglevel: String) {
-        self.loglevel = loglevel;
-    }
-
-    pub fn print_welcome_message(&self){
+    pub fn print_welcome_message(&self) {
         self.display_system_message("Starting up RVP", String::from("TRACE"));
         println!("Reddit View Portal");
     }
 
-    pub fn expect_command(&self) -> String{
+    pub fn expect_command(&self) -> String {
         self.display_message("[Command] Waiting for command");
-        self.display_message("Log in (login/l)\nVisist subreddit (subreddit/r)");
+        self.display_message("Log in (login/l)\nVisist subreddit (subreddit/r)\nExit (exit/x)");
         RVPUI::expect_input()
     }
 
@@ -71,23 +65,31 @@ impl RVPUI {
         trimmed.to_string()
     }
 
-    fn display_message(&self, m: &str){
-        println!("{}",m);
+    pub fn display_message(&self, m: &str) {
+        println!("{}", m);
+    }
+
+    pub fn display_log_message(&self, m: &str, log_level: String) {
+        println!("[{}] {}",log_level,m);
     }
 
     fn display_system_message(&self, m: &str, min_log_level: String) {
-        if self.loglevel == min_log_level {
-            self.display_message(m);
+        self.find_log_level(m,min_log_level.clone(),min_log_level.clone());
+    }
+
+    fn find_log_level(&self, m: &str, current_log: String,  min_log_level: String) {
+        if self.loglevel == current_log {
+            self.display_log_message(m,min_log_level);
         } else {
-            if min_log_level == "TRACE" || min_log_level == "UNKNOWN"{
+            if current_log == "TRACE" || current_log == "UNKNOWN" {
                 return;
             }
-            let next_log_level = RVPUI::decrease_log_level(min_log_level);
-            self.display_system_message(m,next_log_level);
+            let next_log_level = RVPUI::decrease_log_level(current_log);
+            self.display_system_message(m, next_log_level);
         }
     }
 
-    fn decrease_log_level(l: String) -> String{
+    fn decrease_log_level(l: String) -> String {
         match &l[..] {
             "OFF" => String::from("FATAL"),
             "FATAL" => String::from("ERROR"),
@@ -98,5 +100,4 @@ impl RVPUI {
             _ => String::from("UNKNOWN"),
         }
     }
-   
 }
