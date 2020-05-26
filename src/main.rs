@@ -8,6 +8,6 @@ use rvp_api::RVPClient;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rvp: RVPClient = RVPClient::new();
-    rvp.run(String::from("TRACE"));
+    rvp.run();
     Ok(())
 }
