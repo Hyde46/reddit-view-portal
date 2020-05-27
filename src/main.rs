@@ -1,6 +1,7 @@
 extern crate tiny_http;
 mod error;
 mod oauth;
+mod reddit_structs;
 mod rvp_api;
 mod rvp_ui;
 

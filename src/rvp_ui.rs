@@ -14,6 +14,7 @@ static LOGLEVEL: &'static str = "TRACE";
 pub struct RedditHistory {
     pub current_page_type: String,
     pub current_page: String,
+    pub page_limit: usize,
     page_type_history: Vec<String>,
     page_history: Vec<String>,
     base_url: String,
@@ -29,6 +30,7 @@ impl RedditHistory {
             page_history: Vec::new(),
             base_url: "https://www.reddit.com".to_string(),
             oauth_base_url: "https://oauth.reddit.com".to_string(),
+            page_limit: 10,
         }
     }
     pub fn set_target_page(&mut self, page_type: &str, page: &str) {
@@ -58,7 +60,7 @@ pub fn display_status(history: &RedditHistory) {
 
 pub fn expect_command() -> String {
     display_message("Waiting for command...");
-    display_message("-Log in (login/l)\n-Visist subreddit (subreddit/r)\n-View posts on subreddit (posts/v)\n-Exit (exit/x)");
+    display_message("-Log in (login/l)\n-Switch subreddit (subreddit/r)\n-View posts on subreddit (posts/v)\n-Exit (exit/x)");
     expect_input()
 }
 

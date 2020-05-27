@@ -1,5 +1,7 @@
 use crate::oauth::{authorize_user, curl_site, request_site, OAuthClient};
+use crate::reddit_structs::RedditPost;
 use crate::rvp_ui::*;
+use serde_json::Value as SerdeValue;
 
 pub struct RVPClient {
     o_client: OAuthClient,
@@ -50,9 +52,9 @@ impl RVPClient {
     fn execute_command(&mut self, c: String, history: &mut RedditHistory) {
         match &c[..] {
             "l" => self.authorize_client(),
+            "r" => self.switch_page(history),
+            "v" => self.show_posts(history),
             "x" => self.exit_client(),
-            "v" => self.switch_page(history),
-            "r" => self.show_posts(history),
             _ => (),
         }
     }
@@ -73,8 +75,10 @@ impl RVPClient {
                 String::from("ERROR"),
             );
             display_message("Invalid page to visit.");
+            return;
         }
         history.set_target_page(split_target_page[1], split_target_page[2]);
+        self.show_posts(history);
     }
 
     fn exit_client(&mut self) {
@@ -83,16 +87,41 @@ impl RVPClient {
     }
 
     fn show_posts(&mut self, history: &RedditHistory) {
-        self.get_subreddit_posts(&history.current_page, 2);
+        self.get_subreddit_posts(&history.current_page, history.page_limit);
     }
 
     pub fn get_subreddit_posts(&mut self, subreddit: &str, post_amount: usize) {
-        use serde_json::Value;
         let string_response = curl_site(subreddit, post_amount);
-        //println!("{}",string_response);
-        let post: Value = serde_json::from_str(&string_response).unwrap();
-        //let subreddit_children = subreddit_data["children"].as_object().unwrap();
-        println!("{:?}", post["data"]["children"][0]["data"]["title"]);
+        let posts: SerdeValue = serde_json::from_str(&string_response).unwrap();
+        let mut posts_decon: Vec<RedditPost> = Vec::new();
+        for n in 0..post_amount {
+            posts_decon.push(RedditPost {
+                id: posts["data"]["children"][n]["data"]["id"]
+                    .clone()
+                    .to_string(),
+                subreddit: posts["data"]["children"][n]["data"]["subreddit"]
+                    .clone()
+                    .to_string(),
+                title: posts["data"]["children"][n]["data"]["title"]
+                    .clone()
+                    .to_string(),
+                ups: 0,
+                gilded: 0,
+                link_flair_text: posts["data"]["children"][n]["data"]["link_flair_text"]
+                    .clone()
+                    .to_string(),
+                author: posts["data"]["children"][n]["data"]["author"]
+                    .clone()
+                    .to_string(),
+                permalink: posts["data"]["children"][n]["data"]["permalink"]
+                    .clone()
+                    .to_string(),
+                url: posts["data"]["children"][n]["data"]["url"]
+                    .clone()
+                    .to_string(),
+            });
+            println!("{:?}", posts_decon[n]);
+        }
     }
     pub fn get_top_subreddit(&mut self, amount: usize, subreddit: &str) {
         curl_site(subreddit, amount);
