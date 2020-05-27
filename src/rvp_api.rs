@@ -96,29 +96,15 @@ impl RVPClient {
         let mut posts_decon: Vec<RedditPost> = Vec::new();
         for n in 0..post_amount {
             posts_decon.push(RedditPost {
-                id: posts["data"]["children"][n]["data"]["id"]
-                    .clone()
-                    .to_string(),
-                subreddit: posts["data"]["children"][n]["data"]["subreddit"]
-                    .clone()
-                    .to_string(),
-                title: posts["data"]["children"][n]["data"]["title"]
-                    .clone()
-                    .to_string(),
+                id: strip_serde_string(posts["data"]["children"][n]["data"]["id"].to_string()),
+                subreddit:  strip_serde_string(posts["data"]["children"][n]["data"]["subreddit"].to_string()),
+                title: strip_serde_string(posts["data"]["children"][n]["data"]["title"].to_string()),
                 ups: 0,
                 gilded: 0,
-                link_flair_text: posts["data"]["children"][n]["data"]["link_flair_text"]
-                    .clone()
-                    .to_string(),
-                author: posts["data"]["children"][n]["data"]["author"]
-                    .clone()
-                    .to_string(),
-                permalink: posts["data"]["children"][n]["data"]["permalink"]
-                    .clone()
-                    .to_string(),
-                url: posts["data"]["children"][n]["data"]["url"]
-                    .clone()
-                    .to_string(),
+                link_flair_text: strip_serde_string(posts["data"]["children"][n]["data"]["link_flair_text"].to_string()),
+                author: strip_serde_string(posts["data"]["children"][n]["data"]["author"].to_string()),
+                permalink: strip_serde_string(posts["data"]["children"][n]["data"]["permalink"].to_string()),
+                url: strip_serde_string(posts["data"]["children"][n]["data"]["url"].to_string()),
             });
             println!("{:?}", posts_decon[n]);
         }
@@ -131,5 +117,13 @@ impl RVPClient {
             self.o_client.get_access_token(),
             "https://oauth.reddit.com/api/v1/me".to_string(),
         );
+    }
+}
+fn strip_serde_string(val: String) -> String {
+    let s = val.to_string();
+    if s != "null" {
+        s.replace("\"", "")
+    } else {
+        String::from("")
     }
 }
