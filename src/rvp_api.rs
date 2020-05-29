@@ -97,13 +97,23 @@ impl RVPClient {
         for n in 0..post_amount {
             posts_decon.push(RedditPost {
                 id: strip_serde_string(posts["data"]["children"][n]["data"]["id"].to_string()),
-                subreddit:  strip_serde_string(posts["data"]["children"][n]["data"]["subreddit"].to_string()),
-                title: strip_serde_string(posts["data"]["children"][n]["data"]["title"].to_string()),
+                subreddit: strip_serde_string(
+                    posts["data"]["children"][n]["data"]["subreddit"].to_string(),
+                ),
+                title: strip_serde_string(
+                    posts["data"]["children"][n]["data"]["title"].to_string(),
+                ),
                 ups: 0,
                 gilded: 0,
-                link_flair_text: strip_serde_string(posts["data"]["children"][n]["data"]["link_flair_text"].to_string()),
-                author: strip_serde_string(posts["data"]["children"][n]["data"]["author"].to_string()),
-                permalink: strip_serde_string(posts["data"]["children"][n]["data"]["permalink"].to_string()),
+                link_flair_text: strip_serde_string(
+                    posts["data"]["children"][n]["data"]["link_flair_text"].to_string(),
+                ),
+                author: strip_serde_string(
+                    posts["data"]["children"][n]["data"]["author"].to_string(),
+                ),
+                permalink: strip_serde_string(
+                    posts["data"]["children"][n]["data"]["permalink"].to_string(),
+                ),
                 url: strip_serde_string(posts["data"]["children"][n]["data"]["url"].to_string()),
             });
             println!("{:?}", posts_decon[n]);
