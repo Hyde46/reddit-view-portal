@@ -13,6 +13,11 @@ struct RvpClientConfig {
     auth_time: usize,
 }
 
+pub struct Command {
+    pub base_command: String,
+    pub parameter: String,
+}
+
 impl RVPClient {
     pub fn new() -> RVPClient {
         let config = RvpClientConfig { auth_time: 60 };
@@ -26,21 +31,35 @@ impl RVPClient {
 
     pub fn run(&mut self) {
         let mut hist = RedditHistory::new();
-        // Main Logic of RVP
         // Take command
         print_welcome_message();
         while !self.is_exiting {
             display_status(&hist);
-            let c = expect_command();
-            let command = self.validate_command(c).unwrap();
-            self.execute_command(command, &mut hist);
+            let mut c: Command = expect_command();
+            self.validate_command(&c).unwrap();
+            c = self.shorten_command(&c);
+            self.execute_command(c, &mut hist);
         }
         display_message("Goodbye!");
         // Cleanup here if necessary
     }
 
-    fn validate_command(&self, c: String) -> Result<String, String> {
-        match &c[..] {
+    fn shorten_command(&self, c: &Command) -> Command {
+        let mut base_command = match &c.base_command[..] {
+            "l" | "login" => String::from("l"),
+            "r" | "subreddit" => String::from("r"),
+            "v" | "posts" => String::from("v"),
+            "x" | "exit" => String::from("x"),
+            _ => String::from("Unknown command"),
+        };
+        Command {
+            base_command,
+            parameter: c.parameter.clone(),
+        }
+    }
+
+    fn validate_command(&self, c: &Command) -> Result<String, String> {
+        match &c.base_command[..] {
             "l" | "login" => Ok(String::from("l")),
             "r" | "subreddit" => Ok(String::from("r")),
             "v" | "posts" => Ok(String::from("v")),
@@ -49,8 +68,8 @@ impl RVPClient {
         }
     }
 
-    fn execute_command(&mut self, c: String, history: &mut RedditHistory) {
-        match &c[..] {
+    fn execute_command(&mut self, c: Command, history: &mut RedditHistory) {
+        match &c.base_command[..] {
             "l" => self.authorize_client(),
             "r" => self.switch_page(history),
             "v" => self.show_posts(history),

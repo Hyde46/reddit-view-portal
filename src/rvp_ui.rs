@@ -1,3 +1,4 @@
+use crate::rvp_api::Command;
 use std::io;
 
 /* LOG LEVELS
@@ -58,20 +59,27 @@ pub fn display_status(history: &RedditHistory) {
     display_message(&status);
 }
 
-pub fn expect_command() -> String {
+pub fn expect_command() -> Command {
     display_message("Waiting for command...");
     display_message("-Log in (login/l)\n-Switch subreddit (subreddit/r)\n-View posts on subreddit (posts/v)\n-Exit (exit/x)");
-    expect_input()
+    let input = expect_input();
+    let mut split_command: Vec<&str> = input.split(" ").collect();
+    // Pad command if no parameter is supplied
+    if split_command.len() == 1 {
+        split_command.push("");
+    }
+    Command {
+        base_command: split_command[0].to_string(),
+        parameter: split_command[1].to_string(),
+    }
 }
 
 pub fn expect_input() -> String {
     let mut dialog_answer = String::new();
-
     io::stdin()
         .read_line(&mut dialog_answer)
         .expect("Failed to read line");
-    let trimmed = (&dialog_answer[..]).trim();
-    trimmed.to_string()
+    (&dialog_answer[..]).trim().to_string()
 }
 
 pub fn display_message(m: &str) {
