@@ -73,7 +73,6 @@ fn build_oauth_client() -> OAuthClient {
 }
 
 pub fn curl_site(subreddit: &str, amount: usize) -> String {
-    println!("Curling site {} with {}", subreddit, amount);
     let user_agent_header = "User-Agent: RVP/0.1 by Gitrog_Frog";
     let mut easy = Easy::new();
     let reddit_url = format!(
@@ -145,8 +144,8 @@ pub fn authorize_user(wait_time: usize) -> OAuthClient {
         }
     } else {
         oauth_client = authorize_client(oauth_client, wait_time);
+        println!("Done!");
     }
-    println!("Authorized User!");
     oauth_client
 }
 

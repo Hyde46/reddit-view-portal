@@ -10,7 +10,7 @@ use std::io;
     "FATAL",
     "OFF",
 */
-static LOGLEVEL: &'static str = "TRACE";
+static LOGLEVEL: &'static str = "OFF";
 
 pub struct RedditHistory {
     pub current_page_type: String,
@@ -20,18 +20,22 @@ pub struct RedditHistory {
     page_history: Vec<String>,
     base_url: String,
     oauth_base_url: String,
+    current_ui_type: String,
+    ui_type_history: Vec<String>,
 }
 
 impl RedditHistory {
     pub fn new() -> RedditHistory {
         RedditHistory {
             current_page_type: "r".to_string(),
-            current_page: "rust".to_string(),
+            current_page: "popular".to_string(),
             page_type_history: Vec::new(),
             page_history: Vec::new(),
             base_url: "https://www.reddit.com".to_string(),
             oauth_base_url: "https://oauth.reddit.com".to_string(),
             page_limit: 10,
+            current_ui_type: "SUBREDDIT".to_string(),
+            ui_type_history: Vec::new(),
         }
     }
     pub fn set_target_page(&mut self, page_type: &str, page: &str) {
@@ -43,6 +47,18 @@ impl RedditHistory {
         self.page_history.push(self.current_page.clone());
         self.current_page_type = page_type.to_string();
         self.current_page = page.to_string();
+        self.ui_type_history.push(self.current_ui_type.clone());
+        self.current_ui_type = match page_type {
+            "r" => "SUBREDDIT".to_string(),
+            _ => "BASE".to_string(),
+        }
+    }
+    pub fn get_pretty_pagetype(&self) -> String {
+        match &self.current_ui_type[..] {
+            "BASE" => " Main Page".to_string(),
+            "SUBREDDIT" => " In Subreddit".to_string(),
+            _ => "".to_string(),
+        }
     }
 }
 
@@ -53,16 +69,26 @@ pub fn print_welcome_message() {
 
 pub fn display_status(history: &RedditHistory) {
     let status = format!(
-        "[Currently /{}/{}]",
-        history.current_page_type, history.current_page
+        "[Currently /{}/{}{}]",
+        history.current_page_type,
+        history.current_page,
+        history.get_pretty_pagetype()
     );
     display_message(&status);
 }
 
 pub fn expect_command() -> Command {
     display_message("Waiting for command...");
-    display_message("-Log in (login/l)\n-Switch subreddit (subreddit/r)\n-View posts on subreddit (posts/v)\n-Exit (exit/x)");
-    let input = expect_input();
+    display_message(
+        "- Switch subreddit (subreddit/r)
+- View posts on subreddit (posts/v)
+- Create post (create/c)
+- Search User (user/u)
+- Login (login/l)
+- Logout (logout/q)
+- Exit Reddit View Portal (exit/x)",
+    );
+    let input = expect_input().to_ascii_lowercase();
     let mut split_command: Vec<&str> = input.split(" ").collect();
     // Pad command if no parameter is supplied
     if split_command.len() == 1 {
@@ -86,11 +112,11 @@ pub fn display_message(m: &str) {
     println!("{}", m);
 }
 
-pub fn display_log_message(m: &str, log_level: String) {
+fn display_log_message(m: &str, log_level: String) {
     println!("[{}] {}", log_level, m);
 }
 
-fn display_system_message(m: &str, min_log_level: String) {
+pub fn display_system_message(m: &str, min_log_level: String) {
     find_log_level(m, min_log_level.clone(), min_log_level.clone());
 }
 
