@@ -91,10 +91,10 @@ pub fn display_status(history: &RedditHistory) {
     display_message(&status);
 }
 
-pub fn expect_command() -> Command {
-    display_message("Waiting for command...");
+pub fn display_help() {
     display_message(
-        "- Switch subreddit (subreddit/r)
+        "Available commands: 
+- Switch subreddit (subreddit/r)
 - View posts on subreddit (posts/v)
 - Show next posts (next/n)
 - Show previous posts (previous/p)
@@ -102,8 +102,13 @@ pub fn expect_command() -> Command {
 - Search User (user/u)
 - Login (login/l)
 - Logout (logout/q)
+- Help (help/h)
 - Exit Reddit View Portal (exit/x)",
     );
+}
+
+pub fn expect_command() -> Command {
+    display_message("Waiting for command...");
     let input = expect_input().to_ascii_lowercase();
     let mut split_command: Vec<&str> = input.split(" ").collect();
     // Pad command if no parameter is supplied

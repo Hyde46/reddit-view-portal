@@ -33,6 +33,7 @@ impl RVPClient {
         let mut hist = RedditHistory::new();
         // Take command
         print_welcome_message();
+        display_help();
         while !self.is_exiting {
             display_status(&hist);
             let mut c: Command = expect_command();
@@ -59,6 +60,7 @@ impl RVPClient {
                 "u" | "user" => String::from("u"),
                 "q" | "logout" => String::from("q"),
                 "c" | "create" => String::from("c"),
+                "h" | "help" => String::from("h"),
                 _ => String::from("Unknown command"),
             },
             parameter: c.parameter.clone(),
@@ -74,15 +76,26 @@ impl RVPClient {
 
     fn execute_command(&mut self, c: Command, history: &mut RedditHistory) {
         match &c.base_command[..] {
+            // login
             "l" => self.authorize_client(),
+            // subreddit
             "r" => self.switch_page(history, &c),
+            // posts
             "v" => self.show_posts(history, &c),
+            // next
             "n" => self.next_posts(history, &c),
+            // previous
             "p" => self.previous_posts(history, &c),
+            // exit
             "x" => self.exit_client(),
+            // user
             "u" => self.not_implemented(),
+            // create post
             "c" => self.not_implemented(),
+            // logout
             "q" => self.not_implemented(),
+            // help
+            "h" => display_help(),
             _ => (),
         }
     }
