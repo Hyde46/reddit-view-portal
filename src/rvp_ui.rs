@@ -97,6 +97,7 @@ pub fn expect_command() -> Command {
         "- Switch subreddit (subreddit/r)
 - View posts on subreddit (posts/v)
 - Show next posts (next/n)
+- Show previous posts (previous/p)
 - Create post (create/c)
 - Search User (user/u)
 - Login (login/l)

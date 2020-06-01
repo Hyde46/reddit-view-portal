@@ -53,6 +53,7 @@ impl RVPClient {
                 "l" | "login" => String::from("l"),
                 "r" | "subreddit" => String::from("r"),
                 "n" | "next" => String::from("n"),
+                "p" | "previous" => String::from("p"),
                 "v" | "posts" => String::from("v"),
                 "x" | "exit" => String::from("x"),
                 "u" | "user" => String::from("u"),
@@ -77,6 +78,7 @@ impl RVPClient {
             "r" => self.switch_page(history, &c),
             "v" => self.show_posts(history, &c),
             "n" => self.next_posts(history, &c),
+            "p" => self.previous_posts(history, &c),
             "x" => self.exit_client(),
             "u" => self.not_implemented(),
             "c" => self.not_implemented(),
@@ -116,9 +118,17 @@ impl RVPClient {
         self.is_exiting = true;
     }
 
+    fn previous_posts(&mut self, history: &mut RedditHistory, command: &Command) {
+        let mut posts: Vec<RedditPost> =
+        self.get_subreddit_posts(&history.current_page, history.page_limit, &history.current_post_before_hash[..], "");
+        history.set_post_hash(posts[0].before.clone(), posts[0].after.clone());
+        let posts_string: String = posts.into_iter().map(|p| p.pretty_string()).collect();
+        display_message(&posts_string[..]);
+    }
+
     fn next_posts(&mut self, history: &mut RedditHistory, command: &Command) {
         let mut posts: Vec<RedditPost> =
-        self.get_subreddit_posts(&history.current_page, history.page_limit, &history.current_post_after_hash[..]);
+        self.get_subreddit_posts(&history.current_page, history.page_limit, "", &history.current_post_after_hash[..]);
         history.set_post_hash(posts[0].before.clone(), posts[0].after.clone());
         let posts_string: String = posts.into_iter().map(|p| p.pretty_string()).collect();
         display_message(&posts_string[..]);
@@ -126,14 +136,14 @@ impl RVPClient {
 
     fn show_posts(&mut self, history: &mut RedditHistory, command: &Command) {
         let mut posts: Vec<RedditPost> =
-            self.get_subreddit_posts(&history.current_page, history.page_limit, "");
+            self.get_subreddit_posts(&history.current_page, history.page_limit, "", "");
         history.set_post_hash(posts[0].before.clone(), posts[0].after.clone());
         let posts_string: String = posts.into_iter().map(|p| p.pretty_string()).collect();
         display_message(&posts_string[..]);
     }
 
-    pub fn get_subreddit_posts(&mut self, subreddit: &str, post_amount: usize, after_hash: &str) -> Vec<RedditPost> {
-        let string_response = curl_site(subreddit, post_amount, after_hash);
+    pub fn get_subreddit_posts(&mut self, subreddit: &str, post_amount: usize, before_hash: &str, after_hash: &str) -> Vec<RedditPost> {
+        let string_response = curl_site(subreddit, post_amount, before_hash, after_hash);
         let posts: SerdeValue = serde_json::from_str(&string_response).unwrap();
         let mut posts_decon: Vec<RedditPost> = Vec::new();
         for n in 0..post_amount {
@@ -161,7 +171,7 @@ impl RVPClient {
                     posts["data"]["children"][n]["data"]["permalink"].to_string(),
                 ),
                 url: strip_serde_string(posts["data"]["children"][n]["data"]["url"].to_string()),
-                before: strip_serde_string(posts["data"]["children"].to_string()),
+                before: strip_serde_string(posts["data"]["before"].to_string()),
                 after: strip_serde_string(posts["data"]["after"].to_string())
             });
             let reddit_post_object = format!("{:?}", posts_decon[n]);
@@ -171,7 +181,7 @@ impl RVPClient {
     }
 
     pub fn get_top_subreddit(&mut self, amount: usize, subreddit: &str) {
-        curl_site(subreddit, amount, "");
+        curl_site(subreddit, amount, "", "");
     }
 
     pub fn get_profile_info(&mut self) {
