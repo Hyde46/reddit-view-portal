@@ -16,12 +16,12 @@ impl RedditPost {
     pub fn pretty_string(&self) -> String {
         if self.link_flair_text == "" {
             format!(
-                "[{}] - {} in /r/{} | Score:{}\n",
+                "[{}] - {} in /r/{} | Score:{}\n\n",
                 self.title, self.author, self.subreddit, self.score
             )
         } else {
             format!(
-                "[{}]({}) - {} in /r/{} | Score:{}\n",
+                "[{}]({}) - {} in /r/{} | Score:{}\n\n",
                 self.title, self.link_flair_text, self.author, self.subreddit, self.score
             )
         }
