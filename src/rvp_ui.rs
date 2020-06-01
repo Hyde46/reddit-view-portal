@@ -22,6 +22,10 @@ pub struct RedditHistory {
     oauth_base_url: String,
     current_ui_type: String,
     ui_type_history: Vec<String>,
+    pub current_post_after_hash: String,
+    post_after_hash_history: Vec<String>,
+    pub current_post_before_hash: String,
+    post_before_hash_history: Vec<String>,
 }
 
 impl RedditHistory {
@@ -36,6 +40,10 @@ impl RedditHistory {
             page_limit: 10,
             current_ui_type: "SUBREDDIT".to_string(),
             ui_type_history: Vec::new(),
+            current_post_after_hash: "".to_string(),
+            post_after_hash_history: Vec::new(),
+            current_post_before_hash: "".to_string(),
+            post_before_hash_history: Vec::new(),
         }
     }
     pub fn set_target_page(&mut self, page_type: &str, page: &str) {
@@ -52,6 +60,12 @@ impl RedditHistory {
             "r" => "SUBREDDIT".to_string(),
             _ => "BASE".to_string(),
         }
+    }
+    pub fn set_post_hash(&mut self, before: String, after: String) {
+        self.post_before_hash_history.push(before.to_string());
+        self.post_after_hash_history.push(after.to_string());
+        self.current_post_before_hash = before.to_string();
+        self.current_post_after_hash = after.to_string();
     }
     pub fn get_pretty_pagetype(&self) -> String {
         match &self.current_ui_type[..] {
@@ -82,6 +96,7 @@ pub fn expect_command() -> Command {
     display_message(
         "- Switch subreddit (subreddit/r)
 - View posts on subreddit (posts/v)
+- Show next posts (next/n)
 - Create post (create/c)
 - Search User (user/u)
 - Login (login/l)

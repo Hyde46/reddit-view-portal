@@ -72,14 +72,18 @@ fn build_oauth_client() -> OAuthClient {
     }
 }
 
-pub fn curl_site(subreddit: &str, amount: usize) -> String {
+pub fn curl_site(subreddit: &str, amount: usize, after: &str) -> String {
+    let mut limit = amount;
+    if limit == 0 {
+        limit = 1;
+    }
     let user_agent_header = "User-Agent: RVP/0.1 by Gitrog_Frog";
     let mut easy = Easy::new();
-    let reddit_url = format!(
-        "https://www.reddit.com/r/{}/.json?limit={}",
-        subreddit, amount
+    let reddit_base_url = format!(
+        "https://www.reddit.com/r/{}/.json?limit={}&after={}",
+        subreddit, limit, after
     );
-    easy.url(&reddit_url).unwrap();
+    easy.url(&reddit_base_url).unwrap();
     easy.useragent(user_agent_header).unwrap();
 
     let mut return_data: Vec<String> = Vec::new();
