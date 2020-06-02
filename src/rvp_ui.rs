@@ -1,3 +1,4 @@
+use crate::reddit_structs::*;
 use crate::rvp_api::Command;
 use std::io;
 
@@ -10,13 +11,11 @@ use std::io;
     "FATAL",
     "OFF",
 */
-static LOGLEVEL: &'static str = "OFF";
+static LOGLEVEL: &'static str = "TRACE";
 
 pub struct RedditHistory {
-    pub current_page_type: String,
     pub current_page: String,
     pub page_limit: usize,
-    page_type_history: Vec<String>,
     page_history: Vec<String>,
     base_url: String,
     oauth_base_url: String,
@@ -26,14 +25,13 @@ pub struct RedditHistory {
     post_after_hash_history: Vec<String>,
     pub current_post_before_hash: String,
     post_before_hash_history: Vec<String>,
+    pub threads_in_view: Vec<RedditPost>,
 }
 
 impl RedditHistory {
     pub fn new() -> RedditHistory {
         RedditHistory {
-            current_page_type: "r".to_string(),
-            current_page: "popular".to_string(),
-            page_type_history: Vec::new(),
+            current_page: "/r/popular".to_string(),
             page_history: Vec::new(),
             base_url: "https://www.reddit.com".to_string(),
             oauth_base_url: "https://oauth.reddit.com".to_string(),
@@ -44,28 +42,26 @@ impl RedditHistory {
             post_after_hash_history: Vec::new(),
             current_post_before_hash: "".to_string(),
             post_before_hash_history: Vec::new(),
+            threads_in_view: Vec::new(),
         }
     }
-    pub fn set_target_page(&mut self, page_type: &str, page: &str) {
-        display_system_message(
-            &format!("Visiting page /{}/{}", page_type, page),
-            String::from("DEBUG"),
-        );
-        self.page_type_history.push(self.current_page_type.clone());
+    pub fn set_target_page(&mut self, page: &str) {
+        display_system_message(&format!("Visiting page {}", page), String::from("DEBUG"));
         self.page_history.push(self.current_page.clone());
-        self.current_page_type = page_type.to_string();
         self.current_page = page.to_string();
         self.ui_type_history.push(self.current_ui_type.clone());
-        self.current_ui_type = match page_type {
-            "r" => "SUBREDDIT".to_string(),
-            _ => "BASE".to_string(),
-        }
     }
     pub fn set_post_hash(&mut self, before: String, after: String) {
         self.post_before_hash_history.push(before.to_string());
         self.post_after_hash_history.push(after.to_string());
         self.current_post_before_hash = before.to_string();
         self.current_post_after_hash = after.to_string();
+    }
+    pub fn set_threads_in_view(&mut self, threads_in_view: Vec<RedditPost>) {
+        self.threads_in_view = threads_in_view;
+    }
+    pub fn get_threads_in_view_size(&self) -> usize {
+        self.threads_in_view.len()
     }
     pub fn get_pretty_pagetype(&self) -> String {
         match &self.current_ui_type[..] {
@@ -83,8 +79,7 @@ pub fn print_welcome_message() {
 
 pub fn display_status(history: &RedditHistory) {
     let status = format!(
-        "[Currently /{}/{}{}]",
-        history.current_page_type,
+        "[Currently {}{}]",
         history.current_page,
         history.get_pretty_pagetype()
     );
@@ -96,8 +91,9 @@ pub fn display_help() {
         "Available commands: 
 - Switch subreddit (subreddit/r)
 - View posts on subreddit (posts/v)
+- Show comments of post (comments/p <number>)
 - Show next posts (next/n)
-- Show previous posts (previous/p)
+- Show previous posts (before/b)
 - Create post (create/c)
 - Search User (user/u)
 - Login (login/l)

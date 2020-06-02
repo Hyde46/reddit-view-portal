@@ -80,7 +80,7 @@ pub fn curl_site(subreddit: &str, amount: usize, before: &str, after: &str) -> S
     let user_agent_header = "User-Agent: RVP/0.1 by Gitrog_Frog";
     let mut easy = Easy::new();
     let reddit_base_url = format!(
-        "https://www.reddit.com/r/{}/.json?limit={}&after={}&before={}",
+        "https://www.reddit.com{}/.json?limit={}&after={}&before={}",
         subreddit, limit, after, before
     );
     easy.url(&reddit_base_url).unwrap();

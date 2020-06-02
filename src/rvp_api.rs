@@ -53,8 +53,9 @@ impl RVPClient {
             base_command: match &c.base_command[..] {
                 "l" | "login" => String::from("l"),
                 "r" | "subreddit" => String::from("r"),
+                "p" | "comments" => String::from("p"),
                 "n" | "next" => String::from("n"),
-                "p" | "previous" => String::from("p"),
+                "b" | "before" => String::from("b"),
                 "v" | "posts" => String::from("v"),
                 "x" | "exit" => String::from("x"),
                 "u" | "user" => String::from("u"),
@@ -84,8 +85,10 @@ impl RVPClient {
             "v" => self.show_posts(history, &c),
             // next
             "n" => self.next_posts(history, &c),
-            // previous
-            "p" => self.previous_posts(history, &c),
+            // before
+            "b" => self.previous_posts(history, &c),
+            // comments
+            "p" => self.show_comments(history, &c),
             // exit
             "x" => self.exit_client(),
             // user
@@ -105,6 +108,83 @@ impl RVPClient {
         self.o_client = o_client;
     }
 
+    fn show_comments(&mut self, history: &mut RedditHistory, command: &Command) {
+        let selected_post_num = command.parameter.clone().parse::<usize>().unwrap();
+        if selected_post_num > history.get_threads_in_view_size() || selected_post_num <= 0 {
+            display_message("Invalid post number.");
+            return;
+        }
+        let selected_post = &history.threads_in_view[selected_post_num - 1];
+        display_system_message(
+            &format!("Viewing thread: {:?}", selected_post),
+            "TRACE".to_string(),
+        );
+        let comments = self.get_thread_comments(&selected_post.permalink, 100, "", "");
+    }
+
+    fn get_thread_comments(
+        &mut self,
+        page: &str,
+        post_amount: usize,
+        before_hash: &str,
+        after_hash: &str,
+    ) -> Vec<RedditComment> {
+        let string_response = curl_site(page, post_amount, before_hash, after_hash);
+        let posts: SerdeValue = serde_json::from_str(&string_response).unwrap();
+        let mut posts_decon: Vec<RedditComment> = Vec::new();
+        for n in 0..post_amount {
+            posts_decon.push(RedditComment {
+                render_id: (n + 1).to_string(),
+                id: strip_serde_string(posts[1]["data"]["children"][n]["data"]["id"].to_string()),
+                link_id: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["link_id"].to_string(),
+                ),
+                gilded: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["gilded"].to_string(),
+                ),
+                author: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["author"].to_string(),
+                ),
+                parent_id: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["parent_id"].to_string(),
+                ),
+                score: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["score"].to_string(),
+                ),
+                author_fullname: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["author_fullname"].to_string(),
+                ),
+                subreddit_id: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["subreddit_id"].to_string(),
+                ),
+                body: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["body"].to_string(),
+                ),
+                edited: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["edited"].to_string(),
+                ),
+                stickied: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["stickied"].to_string(),
+                ),
+                score_hidden: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["score_hidden"].to_string(),
+                ),
+                permalink: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["permalink"].to_string(),
+                ),
+                distinguished: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["distinguished"].to_string(),
+                ),
+                subreddit_name_prefixed: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["subreddit_name_prefixed"].to_string(),
+                ),
+            });
+            let reddit_post_object = format!("{:?}", posts_decon[n]);
+            display_system_message(&reddit_post_object[..], "TRACE".to_string());
+        }
+        posts_decon
+    }
+
     fn switch_page(&mut self, history: &mut RedditHistory, command: &Command) {
         display_message("Which page to visit? /<page_type>/<page>");
         display_message("To visit a subreddit try: /r/rust");
@@ -118,7 +198,7 @@ impl RVPClient {
             display_message("Invalid page to visit.");
             return;
         }
-        history.set_target_page(split_target_page[1], split_target_page[2]);
+        history.set_target_page(&target_page[..]);
         self.show_posts(history, command);
     }
 
@@ -132,16 +212,24 @@ impl RVPClient {
     }
 
     fn previous_posts(&mut self, history: &mut RedditHistory, command: &Command) {
-        let mut posts: Vec<RedditPost> =
-        self.get_subreddit_posts(&history.current_page, history.page_limit, &history.current_post_before_hash[..], "");
+        let mut posts: Vec<RedditPost> = self.get_subreddit_posts(
+            &history.current_page,
+            history.page_limit,
+            &history.current_post_before_hash[..],
+            "",
+        );
         history.set_post_hash(posts[0].before.clone(), posts[0].after.clone());
         let posts_string: String = posts.into_iter().map(|p| p.pretty_string()).collect();
         display_message(&posts_string[..]);
     }
 
     fn next_posts(&mut self, history: &mut RedditHistory, command: &Command) {
-        let mut posts: Vec<RedditPost> =
-        self.get_subreddit_posts(&history.current_page, history.page_limit, "", &history.current_post_after_hash[..]);
+        let mut posts: Vec<RedditPost> = self.get_subreddit_posts(
+            &history.current_page,
+            history.page_limit,
+            "",
+            &history.current_post_after_hash[..],
+        );
         history.set_post_hash(posts[0].before.clone(), posts[0].after.clone());
         let posts_string: String = posts.into_iter().map(|p| p.pretty_string()).collect();
         display_message(&posts_string[..]);
@@ -151,11 +239,18 @@ impl RVPClient {
         let mut posts: Vec<RedditPost> =
             self.get_subreddit_posts(&history.current_page, history.page_limit, "", "");
         history.set_post_hash(posts[0].before.clone(), posts[0].after.clone());
+        history.set_threads_in_view(posts.clone());
         let posts_string: String = posts.into_iter().map(|p| p.pretty_string()).collect();
         display_message(&posts_string[..]);
     }
 
-    pub fn get_subreddit_posts(&mut self, subreddit: &str, post_amount: usize, before_hash: &str, after_hash: &str) -> Vec<RedditPost> {
+    pub fn get_subreddit_posts(
+        &mut self,
+        subreddit: &str,
+        post_amount: usize,
+        before_hash: &str,
+        after_hash: &str,
+    ) -> Vec<RedditPost> {
         let string_response = curl_site(subreddit, post_amount, before_hash, after_hash);
         let posts: SerdeValue = serde_json::from_str(&string_response).unwrap();
         let mut posts_decon: Vec<RedditPost> = Vec::new();
@@ -173,7 +268,9 @@ impl RVPClient {
                 score: strip_serde_string(
                     posts["data"]["children"][n]["data"]["score"].to_string(),
                 ),
-                gilded: 0,
+                gilded: strip_serde_string(
+                    posts[1]["data"]["children"][n]["data"]["gilded"].to_string(),
+                ),
                 link_flair_text: strip_serde_string(
                     posts["data"]["children"][n]["data"]["link_flair_text"].to_string(),
                 ),
@@ -185,7 +282,7 @@ impl RVPClient {
                 ),
                 url: strip_serde_string(posts["data"]["children"][n]["data"]["url"].to_string()),
                 before: strip_serde_string(posts["data"]["before"].to_string()),
-                after: strip_serde_string(posts["data"]["after"].to_string())
+                after: strip_serde_string(posts["data"]["after"].to_string()),
             });
             let reddit_post_object = format!("{:?}", posts_decon[n]);
             display_system_message(&reddit_post_object[..], "TRACE".to_string());
