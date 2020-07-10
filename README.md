@@ -1,8 +1,8 @@
 #reddit-cli
 small reddit cli written in rust
 
-You can 
-- authenticate with account
+Features:
+- authenticate with Reddit account
 - Browse subreddits
 - view comments in a thread
 
