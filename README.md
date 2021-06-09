@@ -7,7 +7,6 @@ Features:
 - view comments in a thread
 
 Todo:
-- browse comments based on comment tree
 - comment on posts
 - create posts
 - logout 
